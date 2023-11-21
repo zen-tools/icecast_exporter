@@ -15,6 +15,7 @@
 package main
 
 import (
+	"log"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
 )
 
 const (
@@ -191,7 +191,7 @@ func (e *Exporter) scrape(status chan<- *IcecastStatus) {
 	resp, err := e.client.Get(e.URI)
 	if err != nil {
 		e.up.Set(0)
-		log.Errorf("Can't scrape Icecast: %v", err)
+		log.Printf("Can't scrape Icecast: %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -202,7 +202,7 @@ func (e *Exporter) scrape(status chan<- *IcecastStatus) {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		e.up.Set(0)
-		log.Errorf("Can't ready response body: %v", err)
+		log.Printf("Can't ready response body: %v", err)
 		return
 	}
 	
@@ -217,7 +217,7 @@ func (e *Exporter) scrape(status chan<- *IcecastStatus) {
 		var s2 IcecastStatusSingle
 		err = json.NewDecoder(buf).Decode(&s2)
 		if err != nil {
-			log.Errorf("Can't read JSON: %v", err)
+			log.Printf("Can't read JSON: %v", err)
 			e.jsonParseFailures.Inc()
 			return
 		}
@@ -259,11 +259,11 @@ func main() {
 	})
 
 	go func() {
-		log.Infof("Starting Server: %s", *listenAddress)
+		log.Printf("Starting Server: %s", *listenAddress)
 		log.Fatal(http.ListenAndServe(*listenAddress, nil))
 	}()
 
 	s := <-sigchan
-	log.Infof("Received %v, terminating", s)
+	log.Printf("Received %v, terminating", s)
 	os.Exit(0)
 }
